@@ -1,112 +1,14 @@
+from graphics import update
 from math import sin,cos,radians,copysign
 import random
-
-""" This is the model of the game"""
-class Game:
-    def __init__(self, cannonSize, ballSize):
-        # TODO: "pass" means the constructor does nothing. Clearly it should be doing something.
-        # HINT: This constructor needs to create two players according to the rules specified in the assignment text
-        pass 
-
-    """ A list containing both players """
-    def getPlayers(self):
-        return [] #TODO: this is just a dummy value
-
-    """ The current player, i.e. the player whose turn it is """
-    def getCurrentPlayer(self):
-        return None #TODO: this is just a dummy value
-
-    """ The opponent of the current player """
-    def getOtherPlayer(self):
-        return None #TODO: this is just a dummy value
-
-    """ The number (0 or 1) of the current player. This should be the position of the current player in getPlayers(). """
-    def getCurrentPlayerNumber(self):
-        return 0 #TODO: this is just a dummy value
-
-    """ The height/width of the cannon """
-    def getCannonSize(self):
-        return 0 #TODO: this is just a dummy value
-
-    """ The radius of cannon balls """
-    def getBallSize(self):
-        return 0 #TODO: this is just a dummy value
-
-    """ Set the current wind speed, only used for testing """
-    def setCurrentWind(self, wind):
-        pass #TODO: this should do something instead of nothing
-
-    """ Get the current wind speed """
-    def getCurrentWind(self):
-        return 0 #TODO: this is just a dummy value
-
-    """ Switch active player """
-    def nextPlayer(self):
-        pass #TODO: this should do something instead of nothing
+import enum
 
 
-    """ Start a new round with a random wind value (-10 to +10) """
-    def newRound(self):
-        #HINT: random.random() gives a random value between 0 and 1
-        # multiplying this by 20 gives a random value between 0 and 20
-        # how do you shift a value between 0 and 20 to one between -10 and +10?
-        pass #TODO: this should do something instead of nothing
-
-""" Models a player """
-class Player:
-   #TODO: You need to create a constructor here. 
-   #HINT: It should probably take the Game that creates it as parameter and some additional properties that differ between players (like firing-direction, position and color)
-    
-    """ Create and return a projectile starting at the centre of this players cannon. Replaces any previous projectile for this player. """
-    def fire(self, angle, velocity):
-        # The projectile should start in the middle of the cannon of the firing player
-        # HINT: Your job here is to call the constructor of Projectile with all the right values
-        # Some are hard-coded, like the boundaries for x-position, others can be found in Game- or Player-objects
-        return None #TODO: this is just a dummy value
-
-    """ Returns the current projectile of this player if there is one, otherwise None """
-    def getProjectile(self):
-        return None #TODO: this is just a dummy value (although sometimes it's correct)
-
-    """ Gives the x-distance from this players cannon to a projectile. If the cannon and the projectile touch (assuming the projectile is on the ground and factoring in both cannon and projectile size) this method should return 0"""
-    def projectileDistance(self, proj):
-        # HINT: both self (a Player) and proj (a Projectile) have getX()-methods.
-        # HINT: This method should give a negative value if the projectile missed to the left and positive if it missed to the right.
-        # The distance should be how far the projectile and cannon are from touching, not the distance between their centers.
-        # You probably need to use getCannonSize and getBallSize from Game to compensate for the size of cannons/cannonballs
-        return 0 #TODO: this is a dummy value.
-
-    """ The current score of this player """
-    def getScore(self):
-        return 0 #TODO: this is just a dummy value
-
-    """ Increase the score of this player by 1."""
-    def increaseScore(self):
-        pass #TODO: this should do something instead of nothing
-
-    """ Returns the color of this player (a string)"""
-    def getColor(self):
-        return "DUMMY COLOR" #TODO: this is just a dummy value
-
-    """ The x-position of the centre of this players cannon """
-    def getX(self):
-        return 0 #TODO: this is just a dummy value
-
-    """ The angle and velocity of the last projectile this player fired, initially (45, 40) """
-    def getAim(self):
-        return 0, 0 #TODO: this is just a dummy value 
-
-
-
-""" Models a projectile (a cannonball, but could be used more generally) """
 class Projectile:
     """
         Constructor parameters:
         angle and velocity: the initial angle and velocity of the projectile 
             angle 0 means straight east (positive x-direction) and 90 straight up
-        wind: The wind speed value affecting this projectile
-        xPos and yPos: The initial position of this projectile
-        xLower and xUpper: The lowest and highest x-positions allowed
     """
     def __init__(self, angle, velocity, wind, xPos, yPos, xLower, xUpper):
         self.yPos = yPos
@@ -153,3 +55,99 @@ class Projectile:
     """ The current y-position (height) of the projectile". Should never be below 0. """
     def getY(self):
         return self.yPos
+
+class Color(enum.Enum):
+    blue = 0
+    red = 1
+
+class Const:
+    LEFT_END = -110
+    RIGHT_END = 110
+    P0_POS = -90
+    P1_POS = 90
+    WIND_MIN = -10
+    WIND_MAX = 10
+    STARTING_COLOR = Color.blue
+    DEFAULT_ANGLE = 45
+    DEFAULT_VELOCITY = 40
+
+class Game:
+    def __init__(self, cannonSize, ballRadi):
+        self.wind = Game.__newWind()
+        self.ballSize = ballRadi # radius cannonballs
+        self.cannonSize = cannonSize # height (square)
+        self.players = [Player(Color.blue, Const.P0_POS, self), Player(Color.red, Const.P1_POS, self)]
+        self.currentIndex = 0 if Const.STARTING_COLOR == Color.blue else 1
+
+    def __newWind():
+        return random.randint(Const.WIND_MIN, Const.WIND_MAX)
+    def getPlayers(self):
+        return self.players
+    def getCurrentPlayer(self):
+        return self.players[self.currentIndex]
+    def getOtherPlayer(self):
+        otherIndex = 1 if self.currentIndex == 0 else 0
+        return self.players[otherIndex]
+    def getCurrentPlayerNumber(self):
+        return self.currentIndex
+    def getCannonSize(self):
+        return self.cannonSize
+    def getBallSize(self):
+        return self.ballSize
+    def setCurrentWind(self, wind):
+        self.wind = wind
+    def getCurrentWind(self):
+        return self.wind
+    def nextPlayer(self):
+        self.currentIndex = 1 if self.currentIndex == 0 else 0
+    def newRound(self):
+        self.wind = Game.__newWind()
+
+class Player:
+    def __init__(self, color: Color, positionX, game: Game):
+        self.game: Game = game
+        self.color = color
+        self.score = 0
+        self.x = positionX
+        self.projectile: Projectile = None
+        self.aim = (Const.DEFAULT_ANGLE, Const.DEFAULT_VELOCITY)
+        self.firingDirection = 1 if self.color == Color.blue else -1
+        
+   #HINT: It should probably take the Game that creates it as parameter and some additional properties that differ between players (like firing-direction, position and color)
+    
+    """ Create and return a projectile starting at the centre of this players cannon. Replaces any previous projectile for this player. """
+    def fire(self, angle, velocity):
+        angle = angle if self.firingDirection > 0 else 180-angle
+        self.aim = (angle, velocity)
+        proj = Projectile(angle, velocity, self.game.getCurrentWind(), self.x, self.game.getCannonSize()/2.0, Const.LEFT_END, Const.RIGHT_END)
+        self.projectile = proj
+        return proj
+
+    def getProjectile(self):
+        return self.projectile
+
+    """ Gives the x-distance from this players cannon to a projectile. If the cannon and the projectile touch (assuming the projectile is on the ground and factoring in both cannon and projectile size) this method should return 0"""
+    def projectileDistance(self, proj: Projectile):
+        # absolute difference between center of cannonball and center of enemy cannon
+        absDistX = abs(proj.getX() - self.getX())
+        trueDistX = absDistX - (self.game.ballSize + self.game.cannonSize/2.0)
+        if trueDistX <= 0:
+            return 0
+        missToTheLeft = (proj.getX() - self.getX()) < 0
+        distX = trueDistX*-1.0 if missToTheLeft else trueDistX
+        return distX
+
+    def getScore(self):
+        return self.score
+    def increaseScore(self):
+        self.score += 1
+    def getColor(self):
+        return self.color.name
+    """ The x-position of the centre of this players cannon """
+    def getX(self):
+        return self.x
+    """ The angle and velocity of the last projectile this player fired, initially (45, 40) """
+    def getAim(self):
+        return self.aim
+
+

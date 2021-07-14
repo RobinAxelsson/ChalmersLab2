@@ -11,27 +11,54 @@
 #------------------------------------------------------
 
 # This is the only place where graphics should be imported!
-from graphics import *
+import gamemodel
+from graphics import GraphWin, Text, Point, Entry, Rectangle
 
-# TODO: There needs to be a class called GameGraphics here. 
-# Its constructor should take only a Game object.
-# TODO: The class only needs two methods, sync() and getWindow(). 
-# HINT: The constructor needs to create a window, a couple of graphic components and two 
-#       PlayerGraphics-objects that in turn create additional components
-# HINT: sync() needs to call sync() for the two PlayerGraphics-objects
-# HINT: These lines are good for creating a window:
-#       win = GraphWin("Cannon game" , 640, 480, autoflush=False)
-#       win.setCoords(-110, -10, 110, 155)
+class Const:
+    WIN_WIDTH = 640
+    WIN_HEIGHT = 480
+    WIN_X1 = -110
+    WIN_Y1 = -10
+    WIN_X2 = 110
+    WIN_Y2 = 155
+
+class GameGraphics():
+    def __init__(self, game: gamemodel.Game) -> None:
+        p0 = game.getCurrentPlayer()
+        p1 = game.getOtherPlayer()
+        self.graphicPlayers = [PlayerGraphics(p0, self), PlayerGraphics(p1, self)]
+        win = GraphWin("Cannon game" , Const.WIN_WIDTH, Const.WIN_HEIGHT, autoflush=False)
+        win.setCoords(Const.WIN_X1, Const.WIN_Y1, Const.WIN_X2, Const.WIN_Y2)
+        self.window = win
+        # HINT: The constructor needs to create a window, a couple of graphic components and two 
+        #PlayerGraphics-objects that in turn create additional components
+
+    def sync(self):
+        for p in self.graphicPlayers:
+            p.sync(self)
+    def getWindow(self):
+        return self.window
+
 # HINT: Don't forget to call draw() on every component you create, otherwise they will not be visible
 
-# TODO: There needs to be a class called PlayerGraphics here.
-# TODO: It needs only a constructor and a sync()-method
-# HINT: Each PlayerGraphics should contain one Player object. 
-# HINT: Should draw a cannon and a scoreboard immediately 
-#       (the Player object knows its position)
-# HINT: Typically doesn't draw a projectile when created, but creates one at some point
-#       when sync() is called.
-# HINT: sync() needs to update the score text and draw/update a circle for the projectile if there is one. 
+class PlayerGraphics():
+    def __init__(self, player: gamemodel.Player, graphics: GameGraphics):
+        self.player = player
+        # create two points for the rectangle (cannon)
+        p1_x = player.getX()-player.game.cannonSize/2
+        p1_y = 0
+        p2_x = player.getX()+player.game.cannonSize/2
+        p2_y = player.game.cannonSize
+
+        self.cannon = Rectangle(Point(p1_x, p1_y), Point(p2_x, p2_y))
+
+        # HINT: Should draw a cannon and a scoreboard immediately 
+        #(the Player object knows its position)
+    def sync(self):
+        self.cannon.draw(gameGraphics)
+        # HINT: Typically doesn't draw a projectile when created, but creates one at some point
+        #       when sync() is called.
+        # HINT: sync() needs to update the score text and draw/update a circle for the projectile if there is one.
 
 
 """ A somewhat specific input dialog class (adapted from the book) """
