@@ -11,73 +11,98 @@
 #------------------------------------------------------
 
 # This is the only place where graphics should be imported!
-import gamemodel
-from graphics import GraphWin, Text, Point, Entry, Rectangle
+from gamemodel import Const as GameConst, Game, Color as GameColor
+from graphics import Circle, GraphWin, Text, Point, Entry, Rectangle
 
-class Const:
-    WIN_WIDTH = 640
-    WIN_HEIGHT = 480
-    WIN_X1 = -110
-    WIN_Y1 = -10
-    WIN_X2 = 110
-    WIN_Y2 = 155
+class Win:
+    WIDTH = 640
+    HEIGHT = 480
+    X1 = GameConst.LEFT_END
+    Y1 = -10
+    X2 = GameConst.RIGHT_END
+    Y2 = 155
+    BLUE_X = GameConst.P0_POS
+    RED_X = GameConst.P1_POS
+
+class Color:
+    Sky = 'lightblue'
+    Ground = 'green'
+    Red = 'red'
+    Blue = 'blue'
+    Text = 'yellow'
+
+class text:
+    Title = 'Cannon Game'
+    Score = 'Score: '
 
 class GameGraphics():
-    def __init__(self, game: gamemodel.Game) -> None:
-        p0 = game.getCurrentPlayer()
-        p1 = game.getOtherPlayer()
-        self.graphicPlayers = [PlayerGraphics(p0, self), PlayerGraphics(p1, self)]
-        win = GraphWin("Cannon game" , Const.WIN_WIDTH, Const.WIN_HEIGHT, autoflush=False)
-        win.setCoords(Const.WIN_X1, Const.WIN_Y1, Const.WIN_X2, Const.WIN_Y2)
-        self.window = win
-        # HINT: The constructor needs to create a window, a couple of graphic components and two 
-        #PlayerGraphics-objects that in turn create additional components
+    def __init__(self, cannonSize, ballSize):
+        win = GraphWin(text.Title, Win.WIDTH, Win.HEIGHT, autoflush=False)
+        win.setCoords(Win.X1, Win.Y1, Win.X2, Win.Y2)
+        draw = DrawGraphics(win)
+        draw.Sky(Color.Sky)
+        draw.Ground(Color.Ground)
+        draw.Cannon(Color.Blue, Win.BLUE_X, cannonSize)
+        draw.Cannon(Color.Red, Win.RED_X, cannonSize)
+        self.blueScore:Text = draw.text(Win.BLUE_X, text.Score)
+        self.redScore: Text = draw.text(Win.RED_X, text.Score)
+        self.blueBall: Circle = draw.cannonBall(Color.Blue, ballSize, Win.BLUE_X, cannonSize)
+        self.redBall: Circle = draw.cannonBall(Color.Red, ballSize, Win.RED_X, cannonSize)
 
-    def sync(self):
-        for p in self.graphicPlayers:
-            p.sync(self)
-    def getWindow(self):
-        return self.window
+    def UpdateCannonBall(self, color, getX, getY):
+        ball = self.blueBall if color == GameColor.blue else self.redBall
+        xy = self.__convertPos(ball, getX(), getY())
+        ball.move(xy[0], xy[1])
+    
+    def __convertPos(self, ball: Circle, newX, newY):
+        point = ball.getCenter()
+        pX = point.getX()
+        pY = point.getY()
+        dX = newX - pX
+        dY = newY - pY
+        return (dX, dY)
 
-# HINT: Don't forget to call draw() on every component you create, otherwise they will not be visible
-
-class PlayerGraphics():
-    def __init__(self, player: gamemodel.Player, graphics: GameGraphics):
-        self.player = player
-        # create two points for the rectangle (cannon)
-        p1_x = player.getX()-player.game.cannonSize/2
-        p1_y = 0
-        p2_x = player.getX()+player.game.cannonSize/2
-        p2_y = player.game.cannonSize
-
-        self.cannon = Rectangle(Point(p1_x, p1_y), Point(p2_x, p2_y))
-
-        # HINT: Should draw a cannon and a scoreboard immediately 
-        #(the Player object knows its position)
-    def sync(self):
-        self.cannon.draw(gameGraphics)
-        # HINT: Typically doesn't draw a projectile when created, but creates one at some point
-        #       when sync() is called.
-        # HINT: sync() needs to update the score text and draw/update a circle for the projectile if there is one.
-
+class DrawGraphics():
+    def __init__(self, window: GraphWin):
+      self.window = window
+    def Ground(self, color):
+        sky = Rectangle(Point(Win.X1, Win.Y1), Point(Win.X2, 0))
+        sky.setFill(color)
+        sky.draw(self.window)
+    def Sky(self, color):
+        ground = Rectangle(Point(Win.X1, 0), Point(Win.X2, Win.Y2))
+        ground.setFill(color)
+        ground.draw(self.window)
+    def Cannon(self, color, x, cannonSize):
+        point1 = Point(x-cannonSize/2, 0)
+        point2 = Point(x+cannonSize/2, cannonSize)
+        cannon = Rectangle(point1, point2)
+        cannon.setFill(color)
+        cannon.draw(self.window)
+    def cannonBall(self, color, radi, x, cannonSize):
+        ball = Circle(Point(x, cannonSize/2), radi)
+        ball.setFill(color)
+        ball.draw(self.window)
+        return ball
 
 """ A somewhat specific input dialog class (adapted from the book) """
 class InputDialog:
     """ Creates an input dialog with initial values for angle and velocity and displaying wind """
-    def __init__ (self, angle, vel, wind):
+    def __init__ (self, getCurrentWind):
         self.win = win = GraphWin("Fire", 200, 300)
         win.setCoords(0,4.5,4,.5)
-        Text(Point(1,1), "Angle").draw(win)
+        self.angleText = Text(Point(1,1), 'Angle').draw(win)
         self.angle = Entry(Point(3,1), 5).draw(win)
-        self.angle.setText(str(angle))
+        self.angle.setText(str(GameConst.DEFAULT_ANGLE))
+        self.getCurrentWind = getCurrentWind
         
         Text(Point(1,2), "Velocity").draw(win)
         self.vel = Entry(Point(3,2), 5).draw(win)
-        self.vel.setText(str(vel))
+        self.vel.setText(str(GameConst.DEFAULT_VELOCITY))
         
         Text(Point(1,3), "Wind").draw(win)
         self.height = Text(Point(3,3), 5).draw(win)
-        self.height.setText("{0:.2f}".format(wind))
+        self.height.setText("{0:.2f}".format(getCurrentWind()))
         
         self.fire = Button(win, Point(1,4), 1.25, .5, "Fire!")
         self.fire.activate()
