@@ -79,6 +79,9 @@ class Game:
         self.players = [Player(Color.blue, Const.P0_POS, self), Player(Color.red, Const.P1_POS, self)]
         self.currentIndex = 0 if Const.STARTING_COLOR == Color.blue else 1
 
+    def getScore(self, color):
+        player = self.players[0] if color == Color.blue else self.players[1]
+        return player.getScore()
     def __newWind():
         return random.randint(Const.WIND_MIN, Const.WIND_MAX)
     def getPlayers(self):
@@ -102,9 +105,18 @@ class Game:
         self.currentIndex = 1 if self.currentIndex == 0 else 0
     def newRound(self):
         self.wind = Game.__newWind()
+        return self.wind
+    def distanceFromTarget(self, xCannonBall, xTargetCannon):
+        absDistX = abs(xCannonBall - xTargetCannon)
+        trueDistX = absDistX - (self.ballSize + self.cannonSize/2.0)
+        if trueDistX <= 0:
+            return 0
+        missToTheLeft = (xCannonBall - xTargetCannon) < 0
+        distX = trueDistX*-1.0 if missToTheLeft else trueDistX
+        return distX
 
 class Player:
-    def __init__(self, color: Color, positionX, game: Game):
+    def __init__(self, color: Color, positionX:int, game: Game):
         self.game: Game = game
         self.color = color
         self.score = 0
@@ -142,7 +154,7 @@ class Player:
     def increaseScore(self):
         self.score += 1
     def getColor(self):
-        return self.color.name
+        return self.color
     """ The x-position of the centre of this players cannon """
     def getX(self):
         return self.x

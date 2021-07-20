@@ -11,7 +11,7 @@
 #------------------------------------------------------
 
 # This is the only place where graphics should be imported!
-from gamemodel import Const as GameConst, Game, Color as GameColor
+from gamemodel import Const as GameConst, Color as GameColor
 from graphics import Circle, GraphWin, Text, Point, Entry, Rectangle
 
 class Win:
@@ -30,30 +30,41 @@ class Color:
     Red = 'red'
     Blue = 'blue'
     Text = 'yellow'
+    Button = 'black'
+    ButtonLabel = 'pink'
+    ControlDialog = 'white'
+    Entry = 'white'
 
 class text:
     Title = 'Cannon Game'
     Score = 'Score: '
 
 class GameGraphics():
-    def __init__(self, cannonSize, ballSize):
-        win = GraphWin(text.Title, Win.WIDTH, Win.HEIGHT, autoflush=False)
-        win.setCoords(Win.X1, Win.Y1, Win.X2, Win.Y2)
-        draw = DrawGraphics(win)
+    def __init__(self, cannonSize, ballSize, gameGetScore):
+        self.gameGetScore = gameGetScore
+        self.win = GraphWin(text.Title, Win.WIDTH, Win.HEIGHT, autoflush=False)
+        self.win.setCoords(Win.X1, Win.Y1, Win.X2, Win.Y2)
+        draw = GraphicsCreator(self.win)
         draw.Sky(Color.Sky)
         draw.Ground(Color.Ground)
         draw.Cannon(Color.Blue, Win.BLUE_X, cannonSize)
         draw.Cannon(Color.Red, Win.RED_X, cannonSize)
-        self.blueScore:Text = draw.text(Win.BLUE_X, text.Score)
-        self.redScore: Text = draw.text(Win.RED_X, text.Score)
+        self.blueScore:Text = draw.text(Win.BLUE_X, text.Score + '0')
+        self.redScore: Text = draw.text(Win.RED_X, text.Score + '0')
         self.blueBall: Circle = draw.cannonBall(Color.Blue, ballSize, Win.BLUE_X, cannonSize)
         self.redBall: Circle = draw.cannonBall(Color.Red, ballSize, Win.RED_X, cannonSize)
-
-    def UpdateCannonBall(self, color, getX, getY):
-        ball = self.blueBall if color == GameColor.blue else self.redBall
-        xy = self.__convertPos(ball, getX(), getY())
-        ball.move(xy[0], xy[1])
     
+    def quit(self):
+        """Closes the game window"""
+        self.win.close()
+    def UpdateCannonBall(self, color, x, y):
+        ball = self.blueBall if color == GameColor.blue else self.redBall
+        xy = self.__convertPos(ball, x, y)
+        ball.move(xy[0], xy[1])
+    def UpdateScore(self, color):
+        scoreText = self.blueScore if color == GameColor.blue else self.redScore
+        scoreText.setText(text.Score + str(self.gameGetScore(color)))
+
     def __convertPos(self, ball: Circle, newX, newY):
         point = ball.getCenter()
         pX = point.getX()
@@ -62,7 +73,7 @@ class GameGraphics():
         dY = newY - pY
         return (dX, dY)
 
-class DrawGraphics():
+class GraphicsCreator():
     def __init__(self, window: GraphWin):
       self.window = window
     def Ground(self, color):
@@ -84,20 +95,29 @@ class DrawGraphics():
         ball.setFill(color)
         ball.draw(self.window)
         return ball
+    def text(self, x, text):
+        text = Text(Point(x, Win.Y1/2), text)
+        text.setTextColor(Color.Text)
+        text.draw(self.window)
+        return text
 
-""" A somewhat specific input dialog class (adapted from the book) """
+""" The input dialog that controls the game """
 class InputDialog:
     """ Creates an input dialog with initial values for angle and velocity and displaying wind """
-    def __init__ (self, getCurrentWind):
+    def __init__ (self, getCurrentWind, quit):
         self.win = win = GraphWin("Fire", 200, 300)
         win.setCoords(0,4.5,4,.5)
+        self.win.setBackground(Color.ControlDialog)
         self.angleText = Text(Point(1,1), 'Angle').draw(win)
         self.angle = Entry(Point(3,1), 5).draw(win)
+        self.angle.setFill(Color.Entry)
         self.angle.setText(str(GameConst.DEFAULT_ANGLE))
         self.getCurrentWind = getCurrentWind
+        self.quitGame = quit
         
         Text(Point(1,2), "Velocity").draw(win)
         self.vel = Entry(Point(3,2), 5).draw(win)
+        self.vel.setFill(Color.Entry)
         self.vel.setText(str(GameConst.DEFAULT_VELOCITY))
         
         Text(Point(1,3), "Wind").draw(win)
@@ -106,17 +126,23 @@ class InputDialog:
         
         self.fire = Button(win, Point(1,4), 1.25, .5, "Fire!")
         self.fire.activate()
+
         self.quit = Button(win, Point(3,4), 1.25, .5, "Quit")
         self.quit.activate()
 
+    """ Updates the wind after each round """
+    def updateWind(self):
+        self.height.setText("{0:.2f}".format(self.getCurrentWind()))
+
     """ Waits for the player to enter values and click a button """
-    def interact(self):
+    def interact(self, fire):
         while True:
             pt = self.win.getMouse()
             if self.quit.clicked(pt):
-                return "Quit"
+                self.quitGame
+                self.close()
             if self.fire.clicked(pt):
-                return "Fire!"
+                return fire(int(self.angle.getText()), int(self.vel.getText()))
 
     """ Gets the values entered into this window, typically called after interact """
     def getValues(self):
@@ -128,7 +154,16 @@ class InputDialog:
     def close(self):
         self.win.close()
 
-
+class Event:
+    def __init__(self, bindStr, widget):
+        self.bindStr = bindStr
+        widget.bind(bindStr, self.runEvents)
+        self.funcs = []
+    def addFunc(self, func):
+        self.funcs.append(func)
+    def runEvents(self, e):
+        for func in self.funcs:
+            func(e)
 
 """ A general button class (from the book) """
 class Button:
@@ -138,10 +173,9 @@ class Button:
     and deactivate() methods. The clicked(p) method
     returns true if the button is active and p is inside it."""
 
-    def __init__(self, win, center, width, height, label):
+    def __init__(self, win: GraphWin, center, width, height, label):
         """ Creates a rectangular button, eg:
-        qb = Button(myWin, Point(30,25), 20, 10, 'Quit') """ 
-
+        qb = Button(myWin, Point(30,25), 20, 10, 'Quit') """
         w,h = width/2.0, height/2.0
         x,y = center.getX(), center.getY()
         self.xmax, self.xmin = x+w, x-w
@@ -149,11 +183,12 @@ class Button:
         p1 = Point(self.xmin, self.ymin)
         p2 = Point(self.xmax, self.ymax)
         self.rect = Rectangle(p1,p2)
-        self.rect.setFill('lightgray')
+        self.rect.setFill(Color.Button)
         self.rect.draw(win)
         self.label = Text(center, label)
         self.label.draw(win)
         self.deactivate()
+        return
 
     def clicked(self, p):
         "RETURNS true if button active and p is inside"
@@ -167,7 +202,7 @@ class Button:
 
     def activate(self):
         "Sets this button to 'active'."
-        self.label.setFill('black')
+        self.label.setFill(Color.ButtonLabel)
         self.rect.setWidth(2)
         self.active = 1
 

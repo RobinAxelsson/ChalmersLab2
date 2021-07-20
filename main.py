@@ -1,7 +1,7 @@
 # Imports everything from both model and graphics
-from gamemodel import Game
+from gamemodel import Game, Projectile
 from gamegraphics import GameGraphics, InputDialog
-
+import graphics
 
 # Here is a nice little method you get for free
 # It fires a shot for the current player and animates it until it stops
@@ -20,10 +20,24 @@ BallRadi = 3
 
 def graphicPlay():
     game = Game(CannonSize,BallRadi)
-    ggame = GameGraphics(CannonSize, BallRadi)
-    controls = InputDialog()
-    controls.interact()
+    ggame = GameGraphics(CannonSize, BallRadi, game.getScore)
+    controls = InputDialog(game.getCurrentWind, ggame.quit)
+    while True:
+        for i in range(2):
+            player = game.getCurrentPlayer()
+            cannonBall: Projectile = controls.interact(player.fire)
+            while cannonBall.isMoving():
+                cannonBall.update(1/50)
+                ggame.UpdateCannonBall(player.getColor(), cannonBall.getX(), cannonBall.getY())
+                graphics.update(50)
+            if game.distanceFromTarget(cannonBall.getX(), game.getOtherPlayer().getX()) == 0:
+                player.increaseScore()
+                ggame.UpdateScore(player.getColor())
+            if player.getScore() >= 10:
+                break
+            game.nextPlayer()
+        game.newRound()
+        controls.updateWind()
 
 # Run the game with graphical interface
 graphicPlay()
-wait = input("Press Enter to terminate.")
