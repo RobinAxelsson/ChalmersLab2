@@ -154,7 +154,7 @@ class Player:
     def increaseScore(self):
         self.score += 1
     def getColor(self):
-        return self.color
+        return self.color.name
     """ The x-position of the centre of this players cannon """
     def getX(self):
         return self.x

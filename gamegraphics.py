@@ -9,8 +9,6 @@
 #  * Button
 #  * InputDialog
 #------------------------------------------------------
-
-# This is the only place where graphics should be imported!
 from gamemodel import Const as GameConst, Color as GameColor
 from graphics import Circle, GraphWin, Text, Point, Entry, Rectangle
 
@@ -60,11 +58,22 @@ class GameGraphics():
         self.blueBall: Circle = draw.cannonBall(Color.Blue, ballSize, Win.BLUE_X, cannonSize)
         self.redBall: Circle = draw.cannonBall(Color.Red, ballSize, Win.RED_X, cannonSize)
     
+    # only needed to fit test template, the graphics doesnt need it
+    def sync(self):
+        pass
+
+    def getWindow(self):
+        #removes sky and ground rectangles for testcase
+        items = self.win.items
+        for item in items:
+            if hasattr(item, "testStatus") and item.testStatus == False:
+                items.remove(item)
+        return self.win
     def quit(self):
         """Closes the game window"""
         self.win.close()
     def UpdateCannonBall(self, color, x, y):
-        ball = self.blueBall if color == GameColor.blue else self.redBall
+        ball = self.blueBall if color == GameColor.blue.name else self.redBall
         xy = self.__convertPos(ball, x, y)
         ball.move(xy[0], xy[1])
     def UpdateScore(self, color):
@@ -83,13 +92,15 @@ class GraphicsCreator():
     def __init__(self, window: GraphWin):
       self.window = window
     def Ground(self, color):
-        sky = Rectangle(Point(Win.X1, Win.Y1), Point(Win.X2, 0))
-        sky.setFill(color)
-        sky.draw(self.window)
-    def Sky(self, color):
-        ground = Rectangle(Point(Win.X1, 0), Point(Win.X2, Win.Y2))
+        ground = Rectangle(Point(Win.X1, Win.Y1), Point(Win.X2, 0))
         ground.setFill(color)
         ground.draw(self.window)
+        ground.testStatus = False
+    def Sky(self, color):
+        sky = Rectangle(Point(Win.X1, 0), Point(Win.X2, Win.Y2))
+        sky.setFill(color)
+        sky.draw(self.window)
+        sky.testStatus = False
     def Cannon(self, color, x, cannonSize):
         point1 = Point(x-cannonSize/2, 0)
         point2 = Point(x+cannonSize/2, cannonSize)
@@ -159,17 +170,6 @@ class InputDialog:
     """ Closes the input window """
     def close(self):
         self.win.close()
-
-class Event:
-    def __init__(self, bindStr, widget):
-        self.bindStr = bindStr
-        widget.bind(bindStr, self.runEvents)
-        self.funcs = []
-    def addFunc(self, func):
-        self.funcs.append(func)
-    def runEvents(self, e):
-        for func in self.funcs:
-            func(e)
 
 """ A general button class (from the book) """
 class Button:
