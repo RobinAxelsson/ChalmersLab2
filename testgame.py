@@ -4,7 +4,7 @@ import graphics
 import gamemodel
 import gamegraphics
 
-def runTests(game: gamemodel.Game):
+def runTests(game):
 
     players = game.getPlayers()
 
@@ -40,6 +40,7 @@ def runTests(game: gamemodel.Game):
     # Turn off wind
     game.setCurrentWind(0)
     assert game.getCurrentWind() == 0, "wind should be 0"
+
 
     #Testing "Manual fire" for player 0
     proj = game.getCurrentPlayer().fire(30,31)
@@ -85,7 +86,7 @@ def runTests(game: gamemodel.Game):
         proj.update(0.1)
         ticks += 1
         assert ticks <= 61, "projectile should have stopped now..."
-    assert ticks == 61, f"Incorrect tick-count ({ticks} should be 61)"
+    assert ticks == 61, "Incorrect tick-count"
     assert proj.getY()==0.0, "projectile should always stop at y=0"
     assert abs(proj.getX() - -86.84740597475547) < 0.01, "Projectile X-Position is {0:f}, should be -86.84740597475547".format(proj.getX())
     assert abs(players[1].projectileDistance(proj) - -168.84740597475547) < 0.01, "Projectile X-distance to player is {0:f}, should be 168.84740597475547".format(players[1].projectileDistance(proj))
@@ -176,11 +177,10 @@ def testGraphics():
     circles = [x for x in w.items if type(x) == circ_type]
     assert len(circles) <= 2, "there should never be more than two circles! You need to undraw old cannonballs"
 
-if __name__ == '__main__':
-    #runTests(gamemodel.Game(10,3))
-    testGraphics()
 
-# testGraphics()
+runTests(gamemodel.Game(10,3))
+
+testGraphics()
 
 # If your graphical window or close immediately after running test, try uncommenting this
 #wait = input("Press Enter to terminate.")

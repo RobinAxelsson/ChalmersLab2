@@ -33,16 +33,22 @@ class Color:
     Button = 'black'
     ButtonLabel = 'pink'
     ControlDialog = 'white'
-    Entry = 'white'
+    EntryBox = 'white'
 
 class text:
-    Title = 'Cannon Game'
+    WinTitle = 'Cannon Game'
     Score = 'Score: '
+    ControlTitle = 'Fire Controls'
+    FireBtn = 'Fire!'
+    QuitBtn = 'Quit'
+    Wind = 'Wind'
+    Velocity = 'Velocity'
+    Angle = 'Angle'
 
 class GameGraphics():
     def __init__(self, cannonSize, ballSize, gameGetScore):
         self.gameGetScore = gameGetScore
-        self.win = GraphWin(text.Title, Win.WIDTH, Win.HEIGHT, autoflush=False)
+        self.win = GraphWin(text.WinTitle, Win.WIDTH, Win.HEIGHT, autoflush=False)
         self.win.setCoords(Win.X1, Win.Y1, Win.X2, Win.Y2)
         draw = GraphicsCreator(self.win)
         draw.Sky(Color.Sky)
@@ -105,29 +111,29 @@ class GraphicsCreator():
 class InputDialog:
     """ Creates an input dialog with initial values for angle and velocity and displaying wind """
     def __init__ (self, getCurrentWind, quit):
-        self.win = win = GraphWin("Fire", 200, 300)
+        self.win = win = GraphWin(text.ControlTitle, 200, 300)
         win.setCoords(0,4.5,4,.5)
         self.win.setBackground(Color.ControlDialog)
-        self.angleText = Text(Point(1,1), 'Angle').draw(win)
+        self.angleText = Text(Point(1,1), text.Angle).draw(win)
         self.angle = Entry(Point(3,1), 5).draw(win)
-        self.angle.setFill(Color.Entry)
+        self.angle.setFill(Color.EntryBox)
         self.angle.setText(str(GameConst.DEFAULT_ANGLE))
         self.getCurrentWind = getCurrentWind
         self.quitGame = quit
         
-        Text(Point(1,2), "Velocity").draw(win)
+        Text(Point(1,2), text.Velocity).draw(win)
         self.vel = Entry(Point(3,2), 5).draw(win)
-        self.vel.setFill(Color.Entry)
+        self.vel.setFill(Color.EntryBox)
         self.vel.setText(str(GameConst.DEFAULT_VELOCITY))
         
-        Text(Point(1,3), "Wind").draw(win)
+        Text(Point(1,3), text.Wind).draw(win)
         self.height = Text(Point(3,3), 5).draw(win)
         self.height.setText("{0:.2f}".format(getCurrentWind()))
         
-        self.fire = Button(win, Point(1,4), 1.25, .5, "Fire!")
+        self.fire = Button(win, Point(1,4), 1.25, .5, text.FireBtn)
         self.fire.activate()
 
-        self.quit = Button(win, Point(3,4), 1.25, .5, "Quit")
+        self.quit = Button(win, Point(3,4), 1.25, .5, text.QuitBtn)
         self.quit.activate()
 
     """ Updates the wind after each round """
