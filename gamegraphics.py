@@ -9,8 +9,9 @@
 # The sync method is although kept to allow the testgame.py file to function
 # The getWindow method modifies the window by removing the estetic Rectangles sky and ground to allow the testgame.py to function.
 # Input dialog gets two input functions in constructor, quit and getCurrentWind
+# Validate class describes what input values that are excepted.
 
-from gamemodel import Const as GameConst, Color as GameColor, Projectile # Notice the Game object is not needed
+from gamemodel import Const as GameConst, PlayerColor as PlayerColor, Projectile # Notice the Game object is not needed
 from graphics import Circle, GraphWin, Text, Point, Entry, Rectangle
 from typing import Callable #This class is used to get more readability when passing in functions
 #--------------------
@@ -88,12 +89,14 @@ class GameGraphics():
 
     """moves the Circle object that represents the CannonBall"""
     def updateCannonBall(self, color, x, y):
-        ball = self.blueBall if color == GameColor.blue.name else self.redBall
+        color = PlayerColor.validateColor(color)
+        ball = self.blueBall if color == PlayerColor.blue else self.redBall
         xy = self.__convertPos(ball, x, y)
         ball.move(xy[0], xy[1])
     """Rewrites the player score with color as input"""
     def UpdateScore(self, color):
-        scoreText = self.blueScore if color == GameColor.blue else self.redScore
+        color = PlayerColor.validateColor(color)
+        scoreText = self.blueScore if color == PlayerColor.blue else self.redScore
         scoreText.setText(text.Score + str(self.gameGetScore(color)))
 
     # private helper method that converts the position of the cannonBall to relative x, y coords
@@ -141,17 +144,32 @@ class GraphicsCreator():
         text.setTextColor(Color.Text)
         text.draw(self.window)
         return text
-class Validate:
-    def velocity(input: str):
-        if input.isnumeric():
-            return input
-        else:
+class ValidateInput:
+    
+    def velocity(input: str): # Only valid cannonBall velocity is an int/floating number between 0 and 100 units of velocity.
+        if not input.isnumeric():
+            print("The velocity input must be a positive number")
             return None
-    def angle(input):
-        if input.isnumeric():
-            return input
-        else:
+        input = float(input)
+        low_excluded = GameConst.VELOCITY_LOW_EXCLUDED
+        max_excluded = GameConst.VELOCITY_MAX_EXCLUDED
+
+        if not low_excluded < input < max_excluded:
+            print(f"Velocity input must be a number greater than {low_excluded}, but smaller than {max_excluded}.")
             return None
+        return input
+
+    def angle(input): # Only valid aim angle is an int/floating number between 0 and 90 degrees
+        if not input.isnumeric():
+            print("The angle input must be a positive number")
+            return None
+        input = float(input)
+        low_excluded = GameConst.ANGLE_LOW_INCLUDED
+        max_included = GameConst.ANGLE_MAX_INCLUDED
+        if not 0 <= input <= 180:
+            print(f"Angle input must be a number greater than equal to {low_excluded}, but smaller than equal to {max_included}.")
+            return None
+        return input
 
 """ The input dialog that controls the game """
 class InputDialog:
@@ -194,13 +212,10 @@ class InputDialog:
                 self.quitGame()
                 self.close()
             if self.fire.clicked(pt):
-                try:
-                    validAngle = Validate.angle(self.angle.getText())
-                    validVelocity = Validate.velocity(self.vel.getText())
-                except:
-                    print(Exception)
-                else:
-                   return fire(validAngle, validVelocity)
+                validAngle = ValidateInput.angle(self.angle.getText())
+                validVelocity = ValidateInput.velocity(self.vel.getText())
+                if validAngle != None and validVelocity != None:
+                    return fire(validAngle, validVelocity)
 
     """ Gets the values entered into this window, typically called after interact """
     def getValues(self):
