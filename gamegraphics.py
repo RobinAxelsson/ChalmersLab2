@@ -13,48 +13,11 @@
 
 from gamemodel import Const as GameConst, PlayerColor as PlayerColor, Projectile # Notice the Game object is not needed
 from graphics import Circle, GraphWin, Text, Point, Entry, Rectangle
-from typing import Callable #This class is used to get more readability when passing in functions
-#--------------------
-#--GRAPHIC CONSTANTS
-#--------------------
-""" The main window constants, width, height, coordinates... """
-class Win:
-    WIDTH = 640
-    HEIGHT = 480
-    X1 = GameConst.LEFT_END
-    Y1 = -10
-    X2 = GameConst.RIGHT_END
-    Y2 = 155
-    BLUE_X = GameConst.P0_POS
-    RED_X = GameConst.P1_POS
+from typing import Callable #This class is used to get more readability in the when passing in functions
 
-""" Color constants as strings that correlates to the graphics (tk) library """
-class Color:
-    Sky = 'lightblue'
-    Ground = 'green'
-    Red = 'red'
-    Blue = 'blue'
-    Text = 'yellow'
-    Button = 'black'
-    ButtonLabel = 'pink'
-    ControlDialog = 'white'
-    EntryBox = 'white'
-
-""" Game text constants as strings """
-class text:
-    WinTitle = 'Cannon Game'
-    Score = 'Score: '
-    ControlTitle = 'Fire Controls'
-    FireBtn = 'Fire!'
-    QuitBtn = 'Quit'
-    Wind = 'Wind'
-    Velocity = 'Velocity'
-    Angle = 'Angle'
-
-
-#--------------------
-#--GRAPHIC CLASSES
-#--------------------
+#--------------------------------------------------------
+#--GRAPHIC WINDOWS: Main window and Input control window
+#--------------------------------------------------------
 """ Creates and modifies the main game window """
 class GameGraphics():
     # the function gameGetScore is passed in to the constructor to avoid passing the whole Game object (avoid hard coupling).
@@ -108,69 +71,6 @@ class GameGraphics():
         dY = newY - pY
         return (dX, dY)
 
-""" 'Draws' circles, text and rectangles customized for the main game window """
-class GraphicsCreator():
-    def __init__(self, window: GraphWin):
-      self.window = window
-    
-    def Ground(self, color):
-        ground = Rectangle(Point(Win.X1, Win.Y1), Point(Win.X2, 0))
-        ground.setFill(color)
-        ground.draw(self.window)
-        ground.testStatus = False # dynamically tagged the rectangle to be able to remove it in the test case
-    
-    def Sky(self, color):
-        sky = Rectangle(Point(Win.X1, 0), Point(Win.X2, Win.Y2))
-        sky.setFill(color)
-        sky.draw(self.window)
-        sky.testStatus = False # dynamically tagged the rectangle to be able to remove it in the test case
-    
-    def Cannon(self, color, x, cannonSize):
-        point1 = Point(x-cannonSize/2, 0)
-        point2 = Point(x+cannonSize/2, cannonSize)
-        cannon = Rectangle(point1, point2)
-        cannon.setFill(color)
-        cannon.draw(self.window)
-    
-    # draws the cannonball at x in with y half the height of a cannon
-    def cannonBall(self, color, radi, x, cannonSize):
-        ball = Circle(Point(x, cannonSize/2), radi)
-        ball.setFill(color)
-        ball.draw(self.window)
-        return ball
-    
-    def text(self, x, text):
-        text = Text(Point(x, Win.Y1/2), text)
-        text.setTextColor(Color.Text)
-        text.draw(self.window)
-        return text
-class ValidateInput:
-    
-    def velocity(input: str): # Only valid cannonBall velocity is an int/floating number between 0 and 100 units of velocity.
-        if not input.isnumeric():
-            print("The velocity input must be a positive number")
-            return None
-        input = float(input)
-        low_excluded = GameConst.VELOCITY_LOW_EXCLUDED
-        max_excluded = GameConst.VELOCITY_MAX_EXCLUDED
-
-        if not low_excluded < input < max_excluded:
-            print(f"Velocity input must be a number greater than {low_excluded}, but smaller than {max_excluded}.")
-            return None
-        return input
-
-    def angle(input): # Only valid aim angle is an int/floating number between 0 and 90 degrees
-        if not input.isnumeric():
-            print("The angle input must be a positive number")
-            return None
-        input = float(input)
-        low_excluded = GameConst.ANGLE_LOW_INCLUDED
-        max_included = GameConst.ANGLE_MAX_INCLUDED
-        if not 0 <= input <= 180:
-            print(f"Angle input must be a number greater than equal to {low_excluded}, but smaller than equal to {max_included}.")
-            return None
-        return input
-
 """ The input dialog that controls the game """
 class InputDialog:
     """ Creates an input dialog with with getCurrentWind and quit function passed in"""
@@ -209,23 +109,53 @@ class InputDialog:
         while True:
             pt = self.win.getMouse()
             if self.quit.clicked(pt):
-                self.quitGame()
-                self.close()
+                exit()
             if self.fire.clicked(pt):
                 validAngle = ValidateInput.angle(self.angle.getText())
                 validVelocity = ValidateInput.velocity(self.vel.getText())
                 if validAngle != None and validVelocity != None:
                     return fire(validAngle, validVelocity)
 
-    """ Gets the values entered into this window, typically called after interact """
-    def getValues(self):
-        a = float(self.angle.getText())
-        v = float(self.vel.getText())
-        return a,v
+#----------------
+#----HELPERS
+#----------------
 
-    """ Closes the input window """
-    def close(self):
-        self.win.close()
+""" 'Draws' circles, text and rectangles customized for the main game window """
+class GraphicsCreator():
+    def __init__(self, window: GraphWin):
+      self.window = window
+    
+    def Ground(self, color):
+        ground = Rectangle(Point(Win.X1, Win.Y1), Point(Win.X2, 0))
+        ground.setFill(color)
+        ground.draw(self.window)
+        ground.testStatus = False # dynamically tagged the rectangle to be able to remove it in the test case
+    
+    def Sky(self, color):
+        sky = Rectangle(Point(Win.X1, 0), Point(Win.X2, Win.Y2))
+        sky.setFill(color)
+        sky.draw(self.window)
+        sky.testStatus = False # dynamically tagged the rectangle to be able to remove it in the test case
+    
+    def Cannon(self, color, x, cannonSize):
+        point1 = Point(x-cannonSize/2, 0)
+        point2 = Point(x+cannonSize/2, cannonSize)
+        cannon = Rectangle(point1, point2)
+        cannon.setFill(color)
+        cannon.draw(self.window)
+    
+    # draws the cannonball at x in with y half the height of a cannon
+    def cannonBall(self, color, radi, x, cannonSize):
+        ball = Circle(Point(x, cannonSize/2), radi)
+        ball.setFill(color)
+        ball.draw(self.window)
+        return ball
+    
+    def text(self, x, text):
+        text = Text(Point(x, Win.Y1/2), text)
+        text.setTextColor(Color.Text)
+        text.draw(self.window)
+        return text
 
 """ A general button class (from the book) """
 class Button:
@@ -273,3 +203,70 @@ class Button:
         self.label.setFill('darkgrey')
         self.rect.setWidth(1)
         self.active = 0
+
+#--------------------
+#--GRAPHIC CONSTANTS
+#--------------------
+""" The main window constants, width, height, coordinates... """
+class Win:
+    WIDTH = 640
+    HEIGHT = 480
+    X1 = GameConst.LEFT_END
+    Y1 = -10
+    X2 = GameConst.RIGHT_END
+    Y2 = 155
+    BLUE_X = GameConst.P0_POS
+    RED_X = GameConst.P1_POS
+
+""" Color constants as strings that correlates to the graphics (tk) library """
+class Color:
+    Sky = 'lightblue'
+    Ground = 'green'
+    Red = 'red'
+    Blue = 'blue'
+    Text = 'yellow'
+    Button = 'black'
+    ButtonLabel = 'pink'
+    ControlDialog = 'white'
+    EntryBox = 'white'
+
+""" Game text constants as strings """
+class text:
+    WinTitle = 'Cannon Game'
+    Score = 'Score: '
+    ControlTitle = 'Fire Controls'
+    FireBtn = 'Fire!'
+    QuitBtn = 'Quit'
+    Wind = 'Wind'
+    Velocity = 'Velocity'
+    Angle = 'Angle'
+
+#------------------
+#----VALIDATION
+#------------------
+class ValidateInput:
+    
+    def velocity(input: str): # Only valid cannonBall velocity is an int/floating number between 0 and 100 units of velocity.
+        if not input.isnumeric():
+            print("The velocity input must be a positive integer number")
+            return None
+        input = float(input)
+        low_excluded = GameConst.VELOCITY_LOW_EXCLUDED
+        max_excluded = GameConst.VELOCITY_MAX_EXCLUDED
+
+        if not low_excluded < input < max_excluded:
+            print(f"Velocity input must be a number greater than {low_excluded}, but smaller than {max_excluded}.")
+            return None
+        return input
+
+    def angle(input): # Only valid aim angle is an int/floating number between 0 and 90 degrees
+        if not input.isnumeric():
+            print("The angle input must be a positive integer number")
+            return None
+        input = float(input)
+        low_excluded = GameConst.ANGLE_LOW_INCLUDED
+        max_included = GameConst.ANGLE_MAX_INCLUDED
+        if not 0 <= input <= 180:
+            print(f"Angle input must be a number greater than equal to {low_excluded}, but smaller than equal to {max_included}.")
+            return None
+        return input

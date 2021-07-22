@@ -1,39 +1,55 @@
-from graphics import update
-from math import sin,cos,radians,copysign
+from math import sin,cos,radians
 import random
-import enum
 
-class PlayerColor:
-    blue = 'blue'
-    red = 'red'
-    def otherColor(color):
-        if color == 'blue':
-            return 'red'
-        elif color == 'red':
-            return 'blue'
-        else:
-            raise ValueError('PlayerColor must be either blue or red.')
-    def validateColor(color):
-        if color == PlayerColor.blue or color == PlayerColor.red:
-            return color
-        else:
-            raise ValueError('Player colors can only be red or blue.')
-class Const:
-    LEFT_END = -110
-    RIGHT_END = 110
-    P0_POS = -90
-    P1_POS = 90
-    WIND_MIN = -10
-    WIND_MAX = 10
-    STARTING_COLOR = PlayerColor.blue
-    DEFAULT_ANGLE = 45
-    DEFAULT_VELOCITY = 40
-    DEFAULT_CANNON_SIZE = 10
-    DEFAULT_BALL_RADIUS = 3
-    ANGLE_LOW_INCLUDED = 0
-    ANGLE_MAX_INCLUDED = 180
-    VELOCITY_LOW_EXCLUDED = 0
-    VELOCITY_MAX_EXCLUDED = 100
+
+
+#----------------------------
+#--MAIN CLASSES GAME LOGIC
+#----------------------------
+"""Holds and updates the logic state of the game"""
+class Game:
+    def __init__(self, cannonSize, ballRadi):
+        self.wind = Game.__newWind()
+        self.ballSize = ballRadi # radius cannonballs
+        self.cannonSize = cannonSize # height (square)
+        self.players = [Player(PlayerColor.blue, Const.P0_POS, self), Player(PlayerColor.red, Const.P1_POS, self)]
+        self.currentIndex = 0 if Const.STARTING_COLOR == PlayerColor.blue else 1
+
+    def getScore(self, color):
+        player = self.players[0] if color == PlayerColor.blue else self.players[1]
+        return player.getScore()
+    def __newWind():
+        return random.uniform(Const.WIND_MIN, Const.WIND_MAX)
+    def getPlayers(self):
+        return self.players
+    def getCurrentPlayer(self):
+        return self.players[self.currentIndex]
+    def getOtherPlayer(self):
+        otherIndex = 1 if self.currentIndex == 0 else 0
+        return self.players[otherIndex]
+    def getCurrentPlayerNumber(self):
+        return self.currentIndex
+    def getCannonSize(self):
+        return self.cannonSize
+    def getBallSize(self):
+        return self.ballSize
+    def setCurrentWind(self, wind):
+        self.wind = wind
+    def getCurrentWind(self):
+        return self.wind
+    def nextPlayer(self):
+        self.currentIndex = 1 if self.currentIndex == 0 else 0
+    def newRound(self):
+        self.wind = Game.__newWind()
+        return self.wind
+    def distanceFromTarget(self, xCannonBall, xTargetCannon):
+        absDistX = abs(xCannonBall - xTargetCannon)
+        trueDistX = absDistX - (self.ballSize + self.cannonSize/2.0)
+        if trueDistX <= 0:
+            return 0
+        missToTheLeft = (xCannonBall - xTargetCannon) < 0
+        distX = trueDistX*-1.0 if missToTheLeft else trueDistX
+        return distX
 class Projectile:
     """
         Constructor parameters:
@@ -86,52 +102,6 @@ class Projectile:
     def getY(self):
         return self.yPos
 
-
-
-class Game:
-    def __init__(self, cannonSize, ballRadi):
-        self.wind = Game.__newWind()
-        self.ballSize = ballRadi # radius cannonballs
-        self.cannonSize = cannonSize # height (square)
-        self.players = [Player(PlayerColor.blue, Const.P0_POS, self), Player(PlayerColor.red, Const.P1_POS, self)]
-        self.currentIndex = 0 if Const.STARTING_COLOR == PlayerColor.blue else 1
-
-    def getScore(self, color):
-        player = self.players[0] if color == PlayerColor.blue else self.players[1]
-        return player.getScore()
-    def __newWind():
-        return random.randint(Const.WIND_MIN, Const.WIND_MAX)
-    def getPlayers(self):
-        return self.players
-    def getCurrentPlayer(self):
-        return self.players[self.currentIndex]
-    def getOtherPlayer(self):
-        otherIndex = 1 if self.currentIndex == 0 else 0
-        return self.players[otherIndex]
-    def getCurrentPlayerNumber(self):
-        return self.currentIndex
-    def getCannonSize(self):
-        return self.cannonSize
-    def getBallSize(self):
-        return self.ballSize
-    def setCurrentWind(self, wind):
-        self.wind = wind
-    def getCurrentWind(self):
-        return self.wind
-    def nextPlayer(self):
-        self.currentIndex = 1 if self.currentIndex == 0 else 0
-    def newRound(self):
-        self.wind = Game.__newWind()
-        return self.wind
-    def distanceFromTarget(self, xCannonBall, xTargetCannon):
-        absDistX = abs(xCannonBall - xTargetCannon)
-        trueDistX = absDistX - (self.ballSize + self.cannonSize/2.0)
-        if trueDistX <= 0:
-            return 0
-        missToTheLeft = (xCannonBall - xTargetCannon) < 0
-        distX = trueDistX*-1.0 if missToTheLeft else trueDistX
-        return distX
-
 class Player:
     def __init__(self, color: str, positionX:int, game: Game):
         self.game: Game = game
@@ -177,9 +147,44 @@ class Player:
     def getAim(self):
         return self.aim
 
-# --helptext for describing the game
+#-------------------------------
+#----GAME CONSTANTS, VALIDATION
+#-------------------------------
+
+"""Represents the two game colors, blue and validates input color"""
+class PlayerColor:
+    blue = 'blue'
+    red = 'red'
+    def validateColor(color):
+        if color == PlayerColor.blue or color == PlayerColor.red:
+            return color
+        else:
+            raise ValueError('Player colors can only be "red" or "blue".')
+
+"""Holds all the constants of the game logic"""
+class Const:
+    LEFT_END = -110
+    RIGHT_END = 110
+    P0_POS = -90
+    P1_POS = 90
+    WIND_MIN = -10
+    WIND_MAX = 10
+    STARTING_COLOR = PlayerColor.blue
+    DEFAULT_ANGLE = 45
+    DEFAULT_VELOCITY = 40
+    DEFAULT_CANNON_SIZE = 10
+    DEFAULT_BALL_RADIUS = 3
+    ANGLE_LOW_INCLUDED = 0
+    ANGLE_MAX_INCLUDED = 180
+    VELOCITY_LOW_EXCLUDED = 0
+    VELOCITY_MAX_EXCLUDED = 100
+
+#------------------------
+#-----GAME HELP
+#------------------------
+"""Displays instructions how to play the game with command line argument '--help'"""
 class HelpText:
-    __info = ['\n', 'Cannon Game:\n', '\n', 'PLOT: Two player fight to win the Cannon Game by hitting each other with cannon fire.\n', 'When it is your turn you set aim and velocity and then press fire in the input dialog.\n', 'If you hit the other player you will earn a point and a new round will begin with a new wind speed.\n', '\n', 'ROUND: A game consists of multiple rounds, and each round consists of multiple turns.\n', 'A round ends when a player hits the other players’ cannon, winning the round.\n', 'When a round ends, the victorious player is given a point and the wind speed is changed to a new value.\n', 'The starting player for each new round is the player who lost the last round.\n', '\n', 'TURN: Each turn a player aims their cannons and fires, and then the turn passes to the other player.\n', 'Note that wind speed does not change between turns, only between rounds.\n', '\n', 'WIND: Wind speed starts as a random value between -10 and +10.\n', 'When a round ends, a new random wind value is generated.\n', 'Wind affects the horizontal velocity of cannonballs.\n', 'A negative wind value accelerates cannonballs towards the west/left and a positive value towards the east/right.\n', 'A strong wind (near +/-10) affects the projectile in the horizontal direction the same way gravity affects it in the vertical,\n', 'so a cannonball could change direction and “fall” back towards the player that fired it!\n', '\n', 'INPUT ARGUMENTS: The Size of the cannon and radius of cannonball may be entered as input arguments if not default values will be used.\n', "Changing these measures doesn't affect the game only the esthetics. Example '$ main.py 10 5'", '\n']
+    __info = ['\n', 'Cannon Game:\n', '\n', 'PLOT: Two player fight to win the Cannon Game by hitting each other with cannon fire.\n', 'When it is your turn you set aim and velocity and then press fire in the input dialog.\n', 'If you hit the other player you will earn a point and a new round will begin with a new wind speed.\n', '\n', 'ROUND: A game consists of multiple rounds, and each round consists of multiple turns.\n', 'A round ends when a player hits the other players’ cannon, winning the round.\n', 'When a round ends, the victorious player is given a point and the wind speed is changed to a new value.\n', 'The starting player for each new round is the player who lost the last round.\n', '\n', 'TURN: Each turn a player aims their cannons and fires, and then the turn passes to the other player.\n', 'Note that wind speed does not change between turns, only between rounds.\n', '\n', 'WIND: Wind speed starts as a random value between -10 and +10.\n', 'When a round ends, a new random wind value is generated.\n', 'Wind affects the horizontal velocity of cannonballs.\n', 'A negative wind value accelerates cannonballs towards the west/left and a positive value towards the east/right.\n', 'A strong wind (near +/-10) affects the projectile in the horizontal direction the same way gravity affects it in the vertical,\n', 'so a cannonball could change direction and “fall” back towards the player that fired it!\n', '\n', 'INPUT ARGUMENTS: The Size of the cannon and radius of cannonball may be entered as input arguments if not default values will be used.\n', "Changing these measures doesn't affect the game only the esthetics. Example '$ main.py 10 5'", '\n', 'For default game settings run main.py with no arguments.']
     tryHelp = "type arg '--help' for more information about the game"
     def display():
         print("".join(HelpText.__info))

@@ -41,6 +41,7 @@ def graphicPlay(cannonSize, ballRadi):
         print('GG')
 
 if '__main__' == __name__:
+
     if len(sys.argv) == 1:
         graphicPlay(GameConst.DEFAULT_CANNON_SIZE, GameConst.DEFAULT_BALL_RADIUS)
     elif len(sys.argv) == 2:
@@ -48,7 +49,7 @@ if '__main__' == __name__:
         if arg == '--help':
             HelpText.display()
         else:
-            print("Arg2 (cannonSize) and arg3 (cannonballRadius) is needed.")
+            print("Invalid argument input.")
             print(HelpText.tryHelp)
     elif len(sys.argv) == 3:
             try:
