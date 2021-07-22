@@ -1,8 +1,6 @@
 from math import sin,cos,radians
 import random
 
-
-
 #----------------------------
 #--MAIN CLASSES GAME LOGIC
 #----------------------------
@@ -19,7 +17,7 @@ class Game:
         player = self.players[0] if color == PlayerColor.blue else self.players[1]
         return player.getScore()
     def __newWind():
-        return random.uniform(Const.WIND_MIN, Const.WIND_MAX)
+        return random.randint(Const.WIND_MIN, Const.WIND_MAX)
     def getPlayers(self):
         return self.players
     def getCurrentPlayer(self):
@@ -163,6 +161,7 @@ class PlayerColor:
 
 """Holds all the constants of the game logic"""
 class Const:
+    WINNER_SCORE = 3
     LEFT_END = -110
     RIGHT_END = 110
     P0_POS = -90
@@ -178,13 +177,17 @@ class Const:
     ANGLE_MAX_INCLUDED = 180
     VELOCITY_LOW_EXCLUDED = 0
     VELOCITY_MAX_EXCLUDED = 100
+    BALLSIZE_MIN_EXCLUDED = 0
+    BALLSIZE_MAX_INCLUDED = 10
+    CANNONSIZE_MIN_EXCLUDED = 0
+    CANNONSIZE_MAX_INCLUDED = 20
 
 #------------------------
 #-----GAME HELP
 #------------------------
 """Displays instructions how to play the game with command line argument '--help'"""
 class HelpText:
-    __info = ['\n', 'Cannon Game:\n', '\n', 'PLOT: Two player fight to win the Cannon Game by hitting each other with cannon fire.\n', 'When it is your turn you set aim and velocity and then press fire in the input dialog.\n', 'If you hit the other player you will earn a point and a new round will begin with a new wind speed.\n', '\n', 'ROUND: A game consists of multiple rounds, and each round consists of multiple turns.\n', 'A round ends when a player hits the other players’ cannon, winning the round.\n', 'When a round ends, the victorious player is given a point and the wind speed is changed to a new value.\n', 'The starting player for each new round is the player who lost the last round.\n', '\n', 'TURN: Each turn a player aims their cannons and fires, and then the turn passes to the other player.\n', 'Note that wind speed does not change between turns, only between rounds.\n', '\n', 'WIND: Wind speed starts as a random value between -10 and +10.\n', 'When a round ends, a new random wind value is generated.\n', 'Wind affects the horizontal velocity of cannonballs.\n', 'A negative wind value accelerates cannonballs towards the west/left and a positive value towards the east/right.\n', 'A strong wind (near +/-10) affects the projectile in the horizontal direction the same way gravity affects it in the vertical,\n', 'so a cannonball could change direction and “fall” back towards the player that fired it!\n', '\n', 'INPUT ARGUMENTS: The Size of the cannon and radius of cannonball may be entered as input arguments if not default values will be used.\n', "Changing these measures doesn't affect the game only the esthetics. Example '$ main.py 10 5'", '\n', 'For default game settings run main.py with no arguments.']
+    __info = ['\n', 'Cannon Game:\n', '\n', 'PLOT: Two player fight to win the Cannon Game by hitting each other with cannon fire.\n', 'When it is your turn you set aim and velocity and then press fire in the input dialog.\n', 'If you hit the other player you will earn a point and a new round will begin with a new wind speed.\n', '\n', 'ROUND: A game consists of multiple rounds, and each round consists of multiple turns.\n', 'A round ends when a player hits the other players’ cannon, winning the round.\n', 'When a round ends, the victorious player is given a point and the wind speed is changed to a new value.\n', 'The starting player for each new round is the player who lost the last round.\n', '\n', 'TURN: Each turn a player aims their cannons and fires, and then the turn passes to the other player.\n', 'Note that wind speed does not change between turns, only between rounds.\n', '\n', 'WIND: Wind speed starts as a random value between -10 and +10.\n', 'When a round ends, a new random wind value is generated.\n', 'Wind affects the horizontal velocity of cannonballs.\n', 'A negative wind value accelerates cannonballs towards the west/left and a positive value towards the east/right.\n', 'A strong wind (near +/-10) affects the projectile in the horizontal direction the same way gravity affects it in the vertical,\n', 'so a cannonball could change direction and “fall” back towards the player that fired it!\n', '\n', 'INPUT ARGUMENTS: The Size of the cannon and radius of cannonball may be entered as input arguments if not default values will be used. Example: "main.py 10 5"\n']
     tryHelp = "type arg '--help' for more information about the game"
     def display():
         print("".join(HelpText.__info))

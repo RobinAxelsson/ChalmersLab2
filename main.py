@@ -1,44 +1,41 @@
 from gamemodel import Game, HelpText, Projectile, Const as GameConst
-from gamegraphics import GameGraphics, InputDialog
+from gamegraphics import GameGraphics, InputDialog, ValidateInput
 import graphics
 import sys
 
 def graphicPlay(cannonSize, ballRadi):
     game = Game(cannonSize,ballRadi)
-    ggame = GameGraphics(cannonSize, ballRadi, game.getScore)
-    controls = InputDialog(game.getCurrentWind, ggame.quit) # control is handed the quit function
-    hasWinner = False   
-    while hasWinner == False:
+    ggame = GameGraphics(game)
+    controls = InputDialog(game.getCurrentWind) # control is handed the quit function
+    winner = None
+    while True:
+        player = game.getCurrentPlayer()
+        cannonBall: Projectile = controls.interact(player.fire) # the fire function is given to the control dialog
+        
+        while cannonBall.isMoving():
+            cannonBall.update(1/50)
+            ggame.updateCannonBall(player.getColor(), cannonBall.getX(), cannonBall.getY())
+            graphics.update(50)
+        #if the player hits enemy cannon and wins round the loop will end
+        if game.distanceFromTarget(cannonBall.getX(), game.getOtherPlayer().getX()) == 0:
+            player.increaseScore()
+            ggame.UpdateScore(player.getColor())
+            if player.getScore() == GameConst.WINNER_SCORE: #First to max score
+                winner = player
+                break
+            game.newRound()
+            controls.updateWind()
+        game.nextPlayer() #if no hit the round loop continues and next player attacks
 
-        while True:
-            player = game.getCurrentPlayer()
-            cannonBall: Projectile = controls.interact(player.fire) # the fire function is given to the control dialog
-            
-            while cannonBall.isMoving():
-                cannonBall.update(1/50)
-                ggame.updateCannonBall(player.getColor(), cannonBall.getX(), cannonBall.getY())
-                graphics.update(50)
-
-            #if the player hits enemy cannon and wins round the loop will end
-            if game.distanceFromTarget(cannonBall.getX(), game.getOtherPlayer().getX()) == 0:
-                player.increaseScore()
-                if player.getScore() == 10: #First to ten wins the game
-                    hasWinner == True
-                ggame.UpdateScore(player.getColor())
-                game.nextPlayer()
-                game.newRound()
-                controls.updateWind()
-                break 
-            game.nextPlayer() #if no hit the round loop continues and next player attacks
-
-    winner = game.players[0] if game.players[0].getScore == 10 else game.players[1]
-    controls.quitGame()
     print("Winner: " + winner.getColor() + ", congratulations!") # End of Game
     reply = input('Play again? Y/n: ')
-    if reply == 'Y' or 'y':
+    if reply == 'Y' or reply == 'y':
+        controls.close()
+        ggame.close()
         graphicPlay(cannonSize, ballRadi)
     else:
         print('GG')
+        quit()
 
 if '__main__' == __name__:
 
@@ -52,12 +49,9 @@ if '__main__' == __name__:
             print("Invalid argument input.")
             print(HelpText.tryHelp)
     elif len(sys.argv) == 3:
-            try:
-                cannonSize = int(sys.argv[1])
-                cannonBallSize = int(sys.argv[2])
+            cannonSize = ValidateInput.cannonSize(sys.argv[1])
+            cannonBallSize = ValidateInput.ballSize(sys.argv[2])
+            if cannonSize != None and cannonBallSize != None:
                 graphicPlay(cannonSize, cannonBallSize)
-            except ValueError:
-                print("Arg2(cannonSize) and arg3 (cannonballRadius) must be integers.")
-                print(HelpText.tryHelp)
             else:
                 print(HelpText.tryHelp)

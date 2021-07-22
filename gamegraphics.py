@@ -11,7 +11,7 @@
 # Input dialog gets two input functions in constructor, quit and getCurrentWind
 # Validate class describes what input values that are excepted.
 
-from gamemodel import Const as GameConst, PlayerColor as PlayerColor, Projectile # Notice the Game object is not needed
+from gamemodel import Const as GameConst, PlayerColor as PlayerColor, Projectile, Game # Notice the Game object is not needed
 from graphics import Circle, GraphWin, Text, Point, Entry, Rectangle
 from typing import Callable #This class is used to get more readability in the when passing in functions
 
@@ -20,9 +20,10 @@ from typing import Callable #This class is used to get more readability in the w
 #--------------------------------------------------------
 """ Creates and modifies the main game window """
 class GameGraphics():
-    # the function gameGetScore is passed in to the constructor to avoid passing the whole Game object (avoid hard coupling).
-    def __init__(self, cannonSize: int, ballSize: int, gameGetScore: Callable[[str], int]):
-        self.gameGetScore = gameGetScore
+    def __init__(self, game: Game): # Would prefer not to pass in the game object (pass cannonSize, ballSize and getScore instead) to avoid hard coupling - but then it won't pass the test.
+        self.gameGetScore = game.getScore
+        cannonSize = game.getCannonSize()
+        ballSize = game.getBallSize()
         self.win = GraphWin(text.WinTitle, Win.WIDTH, Win.HEIGHT, autoflush=False)
         self.win.setCoords(Win.X1, Win.Y1, Win.X2, Win.Y2)
         draw = GraphicsCreator(self.win)
@@ -46,7 +47,7 @@ class GameGraphics():
             if hasattr(item, "testStatus") and item.testStatus == False:
                 items.remove(item)
         return self.win
-    def quit(self):
+    def close(self):
         """Closes the game window"""
         self.win.close()
 
@@ -74,7 +75,7 @@ class GameGraphics():
 """ The input dialog that controls the game """
 class InputDialog:
     """ Creates an input dialog with with getCurrentWind and quit function passed in"""
-    def __init__ (self, getCurrentWind: Callable[[], int], quit: Callable[[], None]):
+    def __init__ (self, getCurrentWind: Callable[[], int]):
         
         self.win = win = GraphWin(text.ControlTitle, 200, 300)
         win.setCoords(0,4.5,4,.5)
@@ -84,7 +85,6 @@ class InputDialog:
         self.angle.setFill(Color.EntryBox)
         self.angle.setText(str(GameConst.DEFAULT_ANGLE))
         self.getCurrentWind = getCurrentWind
-        self.quitGame = quit
         
         Text(Point(1,2), text.Velocity).draw(win)
         self.vel = Entry(Point(3,2), 5).draw(win)
@@ -101,6 +101,10 @@ class InputDialog:
         self.quit = Button(win, Point(3,4), 1.25, .5, text.QuitBtn)
         self.quit.activate()
 
+    def close(self):
+        """Closes the game window"""
+        self.win.close()
+
     def updateWind(self):
         self.height.setText("{0:.2f}".format(self.getCurrentWind()))
 
@@ -109,7 +113,7 @@ class InputDialog:
         while True:
             pt = self.win.getMouse()
             if self.quit.clicked(pt):
-                exit()
+                quit()
             if self.fire.clicked(pt):
                 validAngle = ValidateInput.angle(self.angle.getText())
                 validVelocity = ValidateInput.velocity(self.vel.getText())
@@ -250,7 +254,7 @@ class ValidateInput:
         if not input.isnumeric():
             print("The velocity input must be a positive integer number")
             return None
-        input = float(input)
+        input = int(input)
         low_excluded = GameConst.VELOCITY_LOW_EXCLUDED
         max_excluded = GameConst.VELOCITY_MAX_EXCLUDED
 
@@ -263,10 +267,34 @@ class ValidateInput:
         if not input.isnumeric():
             print("The angle input must be a positive integer number")
             return None
-        input = float(input)
-        low_excluded = GameConst.ANGLE_LOW_INCLUDED
+        input = int(input)
+        low_included = GameConst.ANGLE_LOW_INCLUDED
         max_included = GameConst.ANGLE_MAX_INCLUDED
-        if not 0 <= input <= 180:
-            print(f"Angle input must be a number greater than equal to {low_excluded}, but smaller than equal to {max_included}.")
+        if not low_included <= input <= max_included:
+            print(f"Angle input must be a number greater than equal to {low_included}, but smaller than equal to {max_included}.")
+            return None
+        return input
+    
+    def cannonSize(input: str):
+        if not input.isnumeric():
+            print("The cannonSize input must be a positive integer number")
+            return None
+        input = int(input)
+        low_excluded = GameConst.CANNONSIZE_MIN_EXCLUDED
+        max_included = GameConst.CANNONSIZE_MAX_INCLUDED
+        if not low_excluded < input <= max_included:
+            print(f"The cannon size input must be a number greater than {low_excluded}, but smaller than equal to {max_included}.")
+            return None
+        return input
+    
+    def ballSize(input: str):
+        if not input.isnumeric():
+            print("The cannon ball size input must be a positive integer number")
+            return None
+        input = int(input)
+        low_excluded = GameConst.BALLSIZE_MIN_EXCLUDED
+        max_included = GameConst.BALLSIZE_MAX_INCLUDED
+        if not low_excluded < input <= max_included:
+            print(f"Cannonsize input must be a number greater than {low_excluded}, but smaller than equal to {max_included}.")
             return None
         return input
